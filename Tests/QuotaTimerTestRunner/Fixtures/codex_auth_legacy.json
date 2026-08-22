@@ -1,0 +1,7 @@
+{
+  "type": "oauth",
+  "access": "legacy-access-token-abc",
+  "refresh": "legacy-refresh-token",
+  "expires": 4102444800000,
+  "accountId": "acct-legacy-12345"
+}

@@ -1,0 +1,98 @@
+name: QuotaTimer
+options:
+  bundleIdPrefix: com.gpw
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "15.0"
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+
+targets:
+  QuotaTimerShared:
+    type: framework
+    platform: macOS
+    sources:
+      - Sources/QuotaTimerShared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.gpw.QuotaTimerShared
+        INFOPLIST_GENERATION_MODE: GeneratedByXcode
+
+  QuotaTimer:
+    type: application
+    platform: macOS
+    sources:
+      - Sources/QuotaTimer
+    dependencies:
+      - target: QuotaTimerShared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.gpw.QuotaTimer
+        INFOPLIST_FILE: Sources/QuotaTimer/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/QuotaTimer/QuotaTimer.entitlements
+        CODE_SIGN_IDENTITY: "-"
+        ENABLE_APP_SANDBOX: false
+
+  QuotaTimerCLI:
+    type: tool
+    platform: macOS
+    sources:
+      - Sources/QuotaTimerCLI
+    dependencies:
+      - target: QuotaTimerShared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.gpw.QuotaTimerCLI
+        INFOPLIST_GENERATION_MODE: GeneratedByXcode
+
+  QuotaTimerTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/QuotaTimerTests
+        excludes:
+          - "Fixtures/**"
+    resources:
+      - path: Tests/QuotaTimerTests/Fixtures
+        buildPhase: resources
+    dependencies:
+      - target: QuotaTimerShared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.gpw.QuotaTimerTests
+        INFOPLIST_GENERATION_MODE: GeneratedByXcode
+
+schemes:
+  QuotaTimer:
+    build:
+      targets:
+        QuotaTimer: all
+        QuotaTimerShared: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - QuotaTimerTests
+
+  QuotaTimerCLI:
+    build:
+      targets:
+        QuotaTimerCLI: all
+        QuotaTimerShared: all
+    run:
+      config: Debug
+
+  QuotaTimerTests:
+    build:
+      targets:
+        QuotaTimerTests: [test]
+        QuotaTimerShared: all
+    test:
+      config: Debug
+      targets:
+        - QuotaTimerTests

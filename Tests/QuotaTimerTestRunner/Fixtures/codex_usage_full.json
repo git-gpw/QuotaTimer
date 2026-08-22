@@ -1,0 +1,45 @@
+{
+  "plan_type": "plus",
+  "rate_limit": {
+    "allowed": true,
+    "limit_reached": false,
+    "primary_window": {
+      "used_percent": 45,
+      "limit_window_seconds": 604800,
+      "reset_after_seconds": 423581,
+      "reset_at": 1786536977
+    },
+    "secondary_window": {
+      "used_percent": 20,
+      "limit_window_seconds": 18000,
+      "reset_after_seconds": 7200,
+      "reset_at": 1786120596
+    }
+  },
+  "additional_rate_limits": [
+    {
+      "limit_name": "GPT-5.3-Codex-Spark",
+      "metered_feature": "codex_spark",
+      "rate_limit": {
+        "primary_window": {
+          "used_percent": 30,
+          "reset_at": 1786718196
+        }
+      }
+    },
+    {
+      "limit_name": "GPT-5.6-Luna",
+      "metered_feature": "codex_luna",
+      "rate_limit": {
+        "primary_window": {
+          "used_percent": 60,
+          "reset_at": 1786718196
+        }
+      }
+    }
+  ],
+  "credits": {
+    "has_credits": false,
+    "balance": "0"
+  }
+}

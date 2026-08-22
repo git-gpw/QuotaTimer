@@ -1,0 +1,10 @@
+{
+  "tokens": {
+    "id_token": "test-id-token",
+    "access_token": "test-access-token-xyz",
+    "refresh_token": "test-refresh-token",
+    "account_id": "acct-12345-abcde"
+  },
+  "auth_mode": "chatgpt",
+  "last_refresh": "2026-08-20T10:00:00.000000Z"
+}
