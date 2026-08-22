@@ -37,8 +37,13 @@ struct MenuBarLabel: View {
                 }
             case .tokenExpired:
                 Label("!", systemImage: "exclamationmark.triangle")
-            case .error:
-                Label("?", systemImage: "exclamationmark.circle")
+            case .error(let kind):
+                switch kind {
+                case .credentialNotFound:
+                    Label("--", systemImage: "person.crop.circle.badge.questionmark")
+                default:
+                    Label("?", systemImage: "exclamationmark.circle")
+                }
             }
         } else {
             Label {

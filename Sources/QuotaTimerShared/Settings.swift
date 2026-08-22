@@ -40,6 +40,14 @@ public final class AppSettings {
         didSet { defaults.set(codexEnabled, forKey: "codexEnabled") }
     }
 
+    public var showTimerWidget: Bool {
+        didSet { defaults.set(showTimerWidget, forKey: "showTimerWidget") }
+    }
+
+    public var showUsageWidget: Bool {
+        didSet { defaults.set(showUsageWidget, forKey: "showUsageWidget") }
+    }
+
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
 
@@ -85,6 +93,9 @@ public final class AppSettings {
         } else {
             self.codexEnabled = true
         }
+
+        self.showTimerWidget = defaults.bool(forKey: "showTimerWidget")
+        self.showUsageWidget = defaults.bool(forKey: "showUsageWidget")
     }
 
     public func isThresholdEnabled(_ level: Int) -> Bool {

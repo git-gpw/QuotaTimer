@@ -11,6 +11,7 @@ struct QuotaTimerApp: App {
     @State private var timerEngine = TimerEngine()
     @State private var settings = AppSettings()
     @State private var thresholdMonitor: ThresholdMonitor?
+    @State private var widgetManager: WidgetManager?
     private let updaterController: SPUStandardUpdaterController
 
     init() {
@@ -37,9 +38,23 @@ struct QuotaTimerApp: App {
                 if thresholdMonitor == nil {
                     thresholdMonitor = ThresholdMonitor(settings: settings)
                 }
+                if widgetManager == nil {
+                    widgetManager = WidgetManager(
+                        pollers: pollers,
+                        timerEngine: timerEngine,
+                        settings: settings
+                    )
+                }
+                widgetManager?.syncWidgets()
             }
             .onChange(of: allWindows) { _, newWindows in
                 thresholdMonitor?.check(windows: newWindows)
+            }
+            .onChange(of: settings.showTimerWidget) { _, _ in
+                widgetManager?.syncWidgets()
+            }
+            .onChange(of: settings.showUsageWidget) { _, _ in
+                widgetManager?.syncWidgets()
             }
         } label: {
             MenuBarLabel(pollers: pollers)

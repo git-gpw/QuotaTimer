@@ -65,6 +65,29 @@ struct SettingsView: View {
                 .fill(.quaternary)
                 .frame(height: 1)
 
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Floating widgets")
+                    .font(.system(size: 12, weight: .medium))
+
+                Toggle("Timer widget", isOn: Binding(
+                    get: { settings.showTimerWidget },
+                    set: { settings.showTimerWidget = $0 }
+                ))
+                .font(.system(size: 11))
+                .toggleStyle(.checkbox)
+
+                Toggle("Usage widget", isOn: Binding(
+                    get: { settings.showUsageWidget },
+                    set: { settings.showUsageWidget = $0 }
+                ))
+                .font(.system(size: 11))
+                .toggleStyle(.checkbox)
+            }
+
+            Rectangle()
+                .fill(.quaternary)
+                .frame(height: 1)
+
             Toggle("Pomodoro presets", isOn: Binding(
                 get: { settings.pomodoroEnabled },
                 set: { settings.pomodoroEnabled = $0 }

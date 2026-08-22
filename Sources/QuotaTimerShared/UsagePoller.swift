@@ -1,12 +1,41 @@
 import Foundation
 import Observation
 
+public enum PollerErrorKind: Sendable {
+    case credentialNotFound
+    case tokenExpired
+    case networkError
+    case rateLimited
+    case decodingError
+    case httpError(Int)
+    case unknown
+
+    public var userMessage: String {
+        switch self {
+        case .credentialNotFound:
+            return "Not logged in"
+        case .tokenExpired:
+            return "Token expired — re-authenticate"
+        case .networkError:
+            return "Network unavailable"
+        case .rateLimited:
+            return "Rate limited — retrying soon"
+        case .decodingError:
+            return "Unexpected API response"
+        case .httpError(let code):
+            return "Server error (\(code))"
+        case .unknown:
+            return "Something went wrong"
+        }
+    }
+}
+
 public enum PollerState: Sendable {
     case idle
     case loading
     case loaded([UsageWindowInfo])
-    case error(String)
-    case tokenExpired(String)
+    case error(PollerErrorKind)
+    case tokenExpired
 }
 
 @MainActor
@@ -63,23 +92,49 @@ public final class UsagePoller: @unchecked Sendable {
             lastUpdated = Date()
             currentBackoff = minBackoff
         } catch let err as KeychainError {
-            if case .tokenExpired(let date) = err {
-                state = .tokenExpired("Token expired at \(date)")
+            DebugLog.shared.logError(err, source: providerName, context: "credential read")
+            if err.isTokenExpired {
+                state = .tokenExpired
+            } else if case .itemNotFound = err {
+                state = .error(.credentialNotFound)
+            } else if case .missingOAuthFields = err {
+                state = .error(.credentialNotFound)
             } else {
-                state = .error(err.description)
+                state = .error(.unknown)
+            }
+        } catch let err as CodexAuthError {
+            DebugLog.shared.logError(err, source: providerName, context: "credential read")
+            switch err {
+            case .tokenExpired:
+                state = .tokenExpired
+            case .fileNotFound, .missingFields:
+                state = .error(.credentialNotFound)
+            case .parseError:
+                state = .error(.unknown)
             }
         } catch let err as UsageAPIError {
-            if case .rateLimited = err {
+            DebugLog.shared.logError(err, source: providerName, context: "API fetch")
+            switch err {
+            case .unauthorized:
+                state = .tokenExpired
+            case .rateLimited:
                 currentBackoff = min(currentBackoff * 2, maxBackoff)
+                state = .error(.rateLimited)
+            case .httpError(let code, _):
+                state = .error(.httpError(code))
+            case .networkError:
+                state = .error(.networkError)
+            case .decodingError:
+                state = .error(.decodingError)
             }
-            state = .error(err.description)
         } catch {
-            state = .error(error.localizedDescription)
+            DebugLog.shared.logError(error, source: providerName, context: "poll")
+            state = .error(.unknown)
         }
     }
 
     private func nextDelay() -> TimeInterval {
-        if case .error(let msg) = state, msg.contains("429") {
+        if case .error(.rateLimited) = state {
             return currentBackoff
         }
         if case .tokenExpired = state {

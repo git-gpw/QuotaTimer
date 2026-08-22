@@ -5,9 +5,15 @@ public enum CredentialStatus: Sendable, Equatable {
     case expired(at: Date?)
     case notFound(hint: String)
     case error(String)
+    case checking
 
     public var isConnected: Bool {
         if case .connected = self { return true }
+        return false
+    }
+
+    public var isChecking: Bool {
+        if case .checking = self { return true }
         return false
     }
 }

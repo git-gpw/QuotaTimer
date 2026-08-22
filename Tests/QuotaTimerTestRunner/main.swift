@@ -242,15 +242,30 @@ do {
 // --- Test: Poller error state ---
 do {
     print("Test: Poller transitions to error state on API error")
+    let provider = MockProvider { throw UsageAPIError.networkError(underlying: URLError(.notConnectedToInternet)) }
+    let poller = UsagePoller(provider: provider)
+
+    await poller.pollOnce()
+
+    if case .error(.networkError) = poller.state {
+        check(true, "state is .error(.networkError)")
+    } else {
+        check(false, "state should be .error(.networkError), got \(poller.state)")
+    }
+}
+
+// --- Test: Poller unauthorized maps to tokenExpired ---
+do {
+    print("Test: Poller transitions to tokenExpired on 401")
     let provider = MockProvider { throw UsageAPIError.unauthorized }
     let poller = UsagePoller(provider: provider)
 
     await poller.pollOnce()
 
-    if case .error(let msg) = poller.state {
-        check(msg.contains("401"), "error message mentions 401")
+    if case .tokenExpired = poller.state {
+        check(true, "401 maps to tokenExpired")
     } else {
-        check(false, "state should be .error")
+        check(false, "state should be .tokenExpired, got \(poller.state)")
     }
 }
 

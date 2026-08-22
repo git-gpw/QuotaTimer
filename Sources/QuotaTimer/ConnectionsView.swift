@@ -35,14 +35,14 @@ struct ConnectionsView: View {
                 name: "Claude",
                 icon: "diamond",
                 color: .orange,
-                status: claudeStatus ?? statusFromPoller("Claude"),
+                status: effectiveStatus(credential: claudeStatus, pollerName: "Claude"),
                 enabled: Binding(
                     get: { settings.claudeEnabled },
                     set: { settings.claudeEnabled = $0 }
                 ),
                 hint: "Run `claude` in Terminal to log in",
                 onReconnect: {
-                    openTerminal(command: "claude")
+                    openTerminalWithCommand("claude")
                 }
             )
 
@@ -50,31 +50,53 @@ struct ConnectionsView: View {
                 name: "Codex",
                 icon: "chevron.left.forwardslash.chevron.right",
                 color: .green,
-                status: codexStatus ?? statusFromPoller("Codex"),
+                status: effectiveStatus(credential: codexStatus, pollerName: "Codex"),
                 enabled: Binding(
                     get: { settings.codexEnabled },
                     set: { settings.codexEnabled = $0 }
                 ),
                 hint: "Run `codex` in Terminal to log in",
                 onReconnect: {
-                    openTerminal(command: "codex")
+                    openTerminalWithCommand("codex")
                 }
             )
         }
         .onAppear { checkAll() }
     }
 
-    private func statusFromPoller(_ name: String) -> CredentialStatus {
-        guard let poller = pollers.first(where: {
-            $0.providerName.lowercased().contains(name.lowercased())
-        }) else {
+    private func effectiveStatus(credential: CredentialStatus?, pollerName: String) -> CredentialStatus {
+        let poller = pollers.first {
+            $0.providerName.lowercased().contains(pollerName.lowercased())
+        }
+
+        if let cred = credential {
+            if cred.isConnected, let poller {
+                switch poller.state {
+                case .loaded:
+                    return .connected(expiresAt: nil)
+                case .error(let kind):
+                    return .error(kind.userMessage)
+                case .tokenExpired:
+                    return .expired(at: nil)
+                case .idle, .loading:
+                    return cred
+                }
+            }
+            return cred
+        }
+
+        guard let poller else {
             return .notFound(hint: "Provider not configured")
         }
         switch poller.state {
-        case .loaded: return .connected(expiresAt: nil)
-        case .tokenExpired: return .expired(at: nil)
-        case .error(let msg): return .error(msg)
-        case .idle, .loading: return .connected(expiresAt: nil)
+        case .loaded:
+            return .connected(expiresAt: nil)
+        case .tokenExpired:
+            return .expired(at: nil)
+        case .error(let kind):
+            return .error(kind.userMessage)
+        case .idle, .loading:
+            return .checking
         }
     }
 
@@ -92,12 +114,18 @@ struct ConnectionsView: View {
         }
     }
 
-    private func openTerminal(command: String) {
-        let script = "tell application \"Terminal\" to do script \"\(command)\""
+    private func openTerminalWithCommand(_ command: String) {
+        let escaped = command.replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        let script = """
+        tell application "Terminal"
+            activate
+            do script "\(escaped)"
+        end tell
+        """
         if let appleScript = NSAppleScript(source: script) {
             var error: NSDictionary?
             appleScript.executeAndReturnError(&error)
-            NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Terminal.app"))
         }
     }
 }
@@ -133,7 +161,7 @@ struct ProviderRow: View {
                     .labelsHidden()
             }
 
-            if !status.isConnected {
+            if !status.isConnected && !status.isChecking {
                 actionRow
             }
         }
@@ -175,6 +203,14 @@ struct ProviderRow: View {
                     .font(.system(size: 10))
                     .foregroundStyle(.red)
             }
+        case .checking:
+            HStack(spacing: 3) {
+                ProgressView()
+                    .controlSize(.mini)
+                Text("Checking")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
+            }
         }
     }
 
@@ -204,13 +240,18 @@ struct ProviderRow: View {
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
-            case .connected:
+                Button("View Log") {
+                    NSWorkspace.shared.open(DebugLog.shared.logFileURL)
+                }
+                .buttonStyle(.borderless)
+                .font(.system(size: 10))
+            case .connected, .checking:
                 EmptyView()
             }
 
             Spacer()
 
-            if case .connected = status {} else {
+            if case .connected = status {} else if case .checking = status {} else {
                 Button("Open Terminal") {
                     onReconnect()
                 }

@@ -24,7 +24,10 @@ struct UsagePopoverView: View {
     }
 
     private var anyLoading: Bool {
-        enabledPollers.contains { if case .loading = $0.state { return true } else { return false } }
+        enabledPollers.contains {
+            if case .loading = $0.state { return true }
+            return false
+        }
     }
 
     private var latestUpdate: Date? {
@@ -195,19 +198,25 @@ struct PollerSectionView: View {
                     }
                 }
 
-            case .error(let msg):
+            case .error(let kind):
                 HStack(spacing: 6) {
-                    Image(systemName: "exclamationmark.circle.fill")
-                        .foregroundStyle(.red)
+                    Image(systemName: errorIcon(kind))
+                        .foregroundStyle(errorColor(kind))
                         .font(.system(size: 12))
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Error")
+                        Text(kind.userMessage)
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.red)
-                        Text(msg)
+                            .foregroundStyle(errorColor(kind))
+                        HStack(spacing: 8) {
+                            Text("Details in log file")
+                                .font(.system(size: 10))
+                                .foregroundStyle(.tertiary)
+                            Button("View Log") {
+                                NSWorkspace.shared.open(DebugLog.shared.logFileURL)
+                            }
+                            .buttonStyle(.borderless)
                             .font(.system(size: 10))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(3)
+                        }
                     }
                 }
             }
@@ -216,6 +225,26 @@ struct PollerSectionView: View {
 
     private var providerColor: Color {
         poller.providerName.lowercased().contains("claude") ? Color.orange : .green
+    }
+
+    private func errorIcon(_ kind: PollerErrorKind) -> String {
+        switch kind {
+        case .credentialNotFound: return "person.crop.circle.badge.questionmark"
+        case .networkError: return "wifi.slash"
+        case .rateLimited: return "clock.arrow.circlepath"
+        case .decodingError, .httpError, .unknown: return "exclamationmark.circle.fill"
+        case .tokenExpired: return "exclamationmark.triangle.fill"
+        }
+    }
+
+    private func errorColor(_ kind: PollerErrorKind) -> Color {
+        switch kind {
+        case .credentialNotFound: return .secondary
+        case .networkError: return .orange
+        case .rateLimited: return .yellow
+        case .tokenExpired: return .orange
+        case .decodingError, .httpError, .unknown: return .red
+        }
     }
 }
 
