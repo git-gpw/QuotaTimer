@@ -39,29 +39,29 @@ func run() async {
 
     // 3. Pretty-print results
     if let w = response.fiveHour {
-        print("5-hour session:  \(pct(w.utilization)) used, resets \(w.resetsAt)")
+        print("5-hour session:  \(pct(w.utilization)) used, resets \(w.resetsAt ?? "n/a")")
     }
     if let w = response.sevenDay {
-        print("7-day total:     \(pct(w.utilization)) used, resets \(w.resetsAt)")
+        print("7-day total:     \(pct(w.utilization)) used, resets \(w.resetsAt ?? "n/a")")
     }
     if let w = response.sevenDayOpus {
-        print("  Opus weekly:   \(pct(w.utilization)) used, resets \(w.resetsAt)")
+        print("  Opus weekly:   \(pct(w.utilization)) used, resets \(w.resetsAt ?? "n/a")")
     }
     if let w = response.sevenDaySonnet {
-        print("  Sonnet weekly: \(pct(w.utilization)) used, resets \(w.resetsAt)")
+        print("  Sonnet weekly: \(pct(w.utilization)) used, resets \(w.resetsAt ?? "n/a")")
     }
     if let w = response.sevenDayFable {
-        print("  Fable weekly:  \(pct(w.utilization)) used, resets \(w.resetsAt)")
+        print("  Fable weekly:  \(pct(w.utilization)) used, resets \(w.resetsAt ?? "n/a")")
     }
     if let w = response.sevenDayDesign {
-        print("  Design weekly: \(pct(w.utilization)) used, resets \(w.resetsAt)")
+        print("  Design weekly: \(pct(w.utilization)) used, resets \(w.resetsAt ?? "n/a")")
     }
 
     if let limits = response.limits, !limits.isEmpty {
         print("\nPer-model limits:")
         for limit in limits {
             let model = limit.scope?.model?.displayName ?? limit.kind
-            print("  \(model): \(pct(limit.percent)) used (\(limit.kind)), resets \(limit.resetsAt)")
+            print("  \(model): \(pct(limit.percent)) used (\(limit.kind)), resets \(limit.resetsAt ?? "n/a")")
         }
     }
 }

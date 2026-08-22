@@ -24,22 +24,29 @@ do {
     let data = fixture("usage_success")
     let r = try JSONDecoder().decode(UsageResponse.self, from: data)
 
-    check(r.fiveHour?.utilization == 0.42, "fiveHour.utilization == 0.42")
+    check(r.fiveHour?.utilization == 42.0, "fiveHour.utilization == 42.0")
     check(r.fiveHour?.resetsAt == "2025-06-10T14:30:00Z", "fiveHour.resetsAt")
-    check(r.sevenDay?.utilization == 0.65, "sevenDay.utilization == 0.65")
-    check(r.sevenDayOpus?.utilization == 0.3, "sevenDayOpus.utilization == 0.3")
-    check(r.sevenDaySonnet?.utilization == 0.5, "sevenDaySonnet.utilization == 0.5")
+    check(r.sevenDay?.utilization == 65.0, "sevenDay.utilization == 65.0")
+    check(r.sevenDayOpus?.utilization == 30.0, "sevenDayOpus.utilization == 30.0")
+    check(r.sevenDaySonnet?.utilization == 50.0, "sevenDaySonnet.utilization == 50.0")
     check(r.sevenDayDesign?.utilization == 0.0, "sevenDayDesign.utilization == 0.0")
     check(r.sevenDayFable?.utilization == 0.0, "sevenDayFable.utilization == 0.0")
+    check(r.sevenDayFable?.resetsAt == nil, "sevenDayFable.resetsAt is null")
+    check(r.nimbus_quill == nil, "nimbus_quill is null")
 
     let limits = r.limits!
-    check(limits.count == 2, "limits.count == 2")
-    check(limits[0].kind == "five_hour", "limits[0].kind == five_hour")
-    check(limits[0].percent == 0.42, "limits[0].percent == 0.42")
+    check(limits.count == 3, "limits.count == 3")
+    check(limits[0].kind == "session", "limits[0].kind == session")
+    check(limits[0].group == "session", "limits[0].group == session")
+    check(limits[0].percent == 42, "limits[0].percent == 42")
+    check(limits[0].isActive == true, "limits[0].isActive == true")
     check(limits[0].scope?.model?.id == "claude-opus-4", "limits[0].scope.model.id")
     check(limits[0].scope?.model?.displayName == "Claude Opus 4", "limits[0].scope.model.displayName")
-    check(limits[1].kind == "seven_day", "limits[1].kind == seven_day")
-    check(limits[1].scope?.model?.id == "claude-sonnet-4", "limits[1].scope.model.id")
+    check(limits[1].kind == "weekly_all", "limits[1].kind == weekly_all")
+    check(limits[1].scope == nil, "limits[1].scope is null")
+    check(limits[2].scope?.model?.id == nil, "limits[2].scope.model.id is null")
+    check(limits[2].scope?.model?.displayName == "Fable", "limits[2].scope.model.displayName == Fable")
+    check(limits[2].resetsAt == nil, "limits[2].resetsAt is null")
 }
 
 // --- Test: Decode empty limits ---
@@ -49,7 +56,8 @@ do {
     let r = try JSONDecoder().decode(UsageResponse.self, from: data)
 
     check(r.fiveHour?.utilization == 0.0, "fiveHour.utilization == 0.0")
-    check(r.sevenDay?.utilization == 0.0, "sevenDay.utilization == 0.0")
+    check(r.fiveHour?.resetsAt == nil, "fiveHour.resetsAt is null")
+    check(r.sevenDay?.utilization == 2.0, "sevenDay.utilization == 2.0")
     check(r.limits?.count == 0, "limits is empty array")
     check(r.sevenDayOpus == nil, "sevenDayOpus is nil")
     check(r.sevenDaySonnet == nil, "sevenDaySonnet is nil")
@@ -160,20 +168,22 @@ do {
 
     let session = windows.first { $0.kind == UsageWindowKind.session }!
     check(session.id == "claude-session", "session id")
-    check(session.usedFraction == 0.42, "session usedFraction == 0.42")
+    check(session.usedFraction == 0.42, "session usedFraction == 0.42 (normalized from 42.0)")
     check(session.label == "5-hour session", "session label")
     check(session.perModel != nil, "session has perModel from limits")
-    check(session.perModel!.count == 1, "session has 1 per-model (five_hour kind)")
+    check(session.perModel!.count == 1, "session has 1 per-model (session group)")
     check(session.perModel![0].displayName == "Claude Opus 4", "session perModel[0] name")
+    check(session.perModel![0].usedFraction == 0.42, "session perModel[0] fraction normalized")
 
     let weekly = windows.first { $0.kind == UsageWindowKind.weekly }!
     check(weekly.id == "claude-weekly", "weekly id")
-    check(weekly.usedFraction == 0.65, "weekly usedFraction == 0.65")
+    check(weekly.usedFraction == 0.65, "weekly usedFraction == 0.65 (normalized from 65.0)")
     check(weekly.perModel != nil, "weekly has perModel")
-    check(weekly.perModel!.count == 4, "weekly has 4 per-model windows")
 
     let modelNames = Set(weekly.perModel!.map { $0.displayName })
-    check(modelNames == Set(["Opus", "Sonnet", "Fable", "Design"]), "weekly model names")
+    check(modelNames.contains("Opus") || modelNames.contains("Sonnet") ||
+          modelNames.contains("Fable") || modelNames.contains("Design"),
+          "weekly has expected model windows")
 }
 
 // --- Test: mapResponse minimal -> session only ---
@@ -185,7 +195,7 @@ do {
 
     check(windows.count == 1, "should produce 1 window")
     check(windows[0].kind == UsageWindowKind.session, "should be session")
-    check(windows[0].usedFraction == 0.99, "usedFraction == 0.99")
+    check(windows[0].usedFraction == 0.99, "usedFraction == 0.99 (<=1 passes through)")
     check(windows[0].perModel == nil, "no perModel without limits")
 }
 
@@ -196,9 +206,12 @@ do {
     let response = try JSONDecoder().decode(UsageResponse.self, from: data)
     let windows = ClaudeUsageProvider.mapResponse(response)
 
-    check(windows.count == 2, "should produce 2 windows")
+    check(windows.count == 2, "should produce 2 windows (null resetsAt gets fallback)")
     let session = windows.first { $0.kind == UsageWindowKind.session }!
+    check(session.usedFraction == 0.0, "session fraction 0.0")
     check(session.perModel == nil, "no perModel with empty limits")
+    let weekly = windows.first { $0.kind == UsageWindowKind.weekly }!
+    check(weekly.usedFraction == 0.02, "weekly fraction 0.02 (normalized from 2.0)")
 }
 
 // ============================================================

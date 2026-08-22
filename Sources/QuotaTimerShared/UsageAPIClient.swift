@@ -65,6 +65,8 @@ public struct UsageAPIClient: Sendable {
         do {
             return try JSONDecoder().decode(UsageResponse.self, from: data)
         } catch {
+            let rawBody = String(data: data, encoding: .utf8) ?? "(non-UTF8)"
+            DebugLog.shared.log("SCHEMA MISMATCH — raw response:\n\(rawBody)", source: "Claude API")
             throw UsageAPIError.decodingError(underlying: error)
         }
     }
