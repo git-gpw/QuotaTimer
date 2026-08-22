@@ -12,41 +12,6 @@ struct SettingsView: View {
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Appearance")
-                    .font(.system(size: 12, weight: .medium))
-
-                HStack(spacing: 8) {
-                    AppearanceChoice(
-                        label: "Light",
-                        icon: "sun.max",
-                        selected: settings.appearance == .light
-                    ) {
-                        settings.appearance = .light
-                    }
-
-                    AppearanceChoice(
-                        label: "Dark",
-                        icon: "moon",
-                        selected: settings.appearance == .dark
-                    ) {
-                        settings.appearance = .dark
-                    }
-
-                    AppearanceChoice(
-                        label: "System",
-                        icon: "desktopcomputer",
-                        selected: settings.appearance == .system
-                    ) {
-                        settings.appearance = .system
-                    }
-                }
-            }
-
-            Rectangle()
-                .fill(.quaternary)
-                .frame(height: 1)
-
             VStack(alignment: .leading, spacing: 4) {
                 Text("Threshold alerts")
                     .font(.system(size: 12, weight: .medium))
@@ -116,39 +81,5 @@ struct SettingsView: View {
                     .foregroundStyle(.red)
             }
         }
-    }
-}
-
-struct AppearanceChoice: View {
-    let label: String
-    let icon: String
-    let selected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 14))
-                    .frame(width: 36, height: 28)
-                    .background {
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(selected ? AnyShapeStyle(.blue.opacity(0.12)) : AnyShapeStyle(.quaternary))
-                    }
-
-                Text(label)
-                    .font(.system(size: 10))
-                    .foregroundStyle(selected ? .blue : .secondary)
-            }
-            .frame(maxWidth: .infinity)
-            .overlay {
-                if selected {
-                    RoundedRectangle(cornerRadius: 8)
-                        .strokeBorder(.blue.opacity(0.3), lineWidth: 1.5)
-                        .padding(-4)
-                }
-            }
-        }
-        .buttonStyle(.borderless)
     }
 }

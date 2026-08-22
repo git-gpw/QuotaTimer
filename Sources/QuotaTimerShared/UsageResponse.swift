@@ -50,6 +50,17 @@ public struct UsageWindow: Codable, Sendable {
         case utilization
         case resetsAt = "resets_at"
     }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        utilization = try c.decode(Double.self, forKey: .utilization)
+        resetsAt = try? c.decode(String.self, forKey: .resetsAt)
+    }
+
+    public init(utilization: Double, resetsAt: String?) {
+        self.utilization = utilization
+        self.resetsAt = resetsAt
+    }
 }
 
 public struct UsageLimit: Codable, Sendable {
@@ -66,6 +77,17 @@ public struct UsageLimit: Codable, Sendable {
         case resetsAt = "resets_at"
         case scope, group, severity
         case isActive = "is_active"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        kind = try c.decode(String.self, forKey: .kind)
+        percent = try c.decode(Double.self, forKey: .percent)
+        resetsAt = try? c.decode(String.self, forKey: .resetsAt)
+        scope = try c.decodeIfPresent(UsageLimitScope.self, forKey: .scope)
+        group = try c.decodeIfPresent(String.self, forKey: .group)
+        severity = try c.decodeIfPresent(String.self, forKey: .severity)
+        isActive = try c.decodeIfPresent(Bool.self, forKey: .isActive)
     }
 }
 

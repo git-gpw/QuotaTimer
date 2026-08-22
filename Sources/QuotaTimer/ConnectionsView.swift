@@ -161,7 +161,7 @@ struct ProviderRow: View {
                     .labelsHidden()
             }
 
-            if !status.isConnected && !status.isChecking {
+            if enabled.wrappedValue && !status.isConnected && !status.isChecking {
                 actionRow
             }
         }

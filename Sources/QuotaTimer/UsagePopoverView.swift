@@ -87,7 +87,6 @@ struct UsagePopoverView: View {
         }
         .frame(width: 300)
         .frame(maxHeight: 500)
-        .applyAppearance(settings.appearance)
         .task {
             for poller in pollers { poller.start() }
         }

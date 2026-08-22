@@ -4,17 +4,30 @@ import QuotaTimerShared
 
 @main
 struct QuotaTimerApp: App {
-    @State private var pollers: [UsagePoller] = [
-        UsagePoller(provider: ClaudeUsageProvider()),
-        UsagePoller(provider: CodexUsageProvider()),
-    ]
-    @State private var timerEngine = TimerEngine()
-    @State private var settings = AppSettings()
+    @State private var pollers: [UsagePoller]
+    @State private var timerEngine: TimerEngine
+    @State private var settings: AppSettings
     @State private var thresholdMonitor: ThresholdMonitor?
-    @State private var widgetManager: WidgetManager?
+    @State private var widgetManager: WidgetManager
     private let updaterController: SPUStandardUpdaterController
 
     init() {
+        let pollers = [
+            UsagePoller(provider: ClaudeUsageProvider()),
+            UsagePoller(provider: CodexUsageProvider()),
+        ]
+        let timerEngine = TimerEngine()
+        let settings = AppSettings()
+
+        _pollers = State(wrappedValue: pollers)
+        _timerEngine = State(wrappedValue: timerEngine)
+        _settings = State(wrappedValue: settings)
+        _widgetManager = State(wrappedValue: WidgetManager(
+            pollers: pollers,
+            timerEngine: timerEngine,
+            settings: settings
+        ))
+
         updaterController = SPUStandardUpdaterController(
             startingUpdater: false,
             updaterDelegate: nil,
@@ -38,23 +51,9 @@ struct QuotaTimerApp: App {
                 if thresholdMonitor == nil {
                     thresholdMonitor = ThresholdMonitor(settings: settings)
                 }
-                if widgetManager == nil {
-                    widgetManager = WidgetManager(
-                        pollers: pollers,
-                        timerEngine: timerEngine,
-                        settings: settings
-                    )
-                }
-                widgetManager?.syncWidgets()
             }
             .onChange(of: allWindows) { _, newWindows in
                 thresholdMonitor?.check(windows: newWindows)
-            }
-            .onChange(of: settings.showTimerWidget) { _, _ in
-                widgetManager?.syncWidgets()
-            }
-            .onChange(of: settings.showUsageWidget) { _, _ in
-                widgetManager?.syncWidgets()
             }
         } label: {
             MenuBarLabel(pollers: pollers)

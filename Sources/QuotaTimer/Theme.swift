@@ -74,17 +74,3 @@ struct GradientProgressBar: View {
         .frame(height: height)
     }
 }
-
-extension View {
-    @ViewBuilder
-    func applyAppearance(_ appearance: AppAppearance) -> some View {
-        switch appearance {
-        case .system:
-            self
-        case .light:
-            self.environment(\.colorScheme, .light)
-        case .dark:
-            self.environment(\.colorScheme, .dark)
-        }
-    }
-}

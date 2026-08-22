@@ -1,12 +1,6 @@
 import Foundation
 import Observation
 
-public enum AppAppearance: String, Sendable, CaseIterable {
-    case system
-    case light
-    case dark
-}
-
 @Observable
 @MainActor
 public final class AppSettings {
@@ -22,10 +16,6 @@ public final class AppSettings {
 
     public var pollInterval: TimeInterval {
         didSet { defaults.set(pollInterval, forKey: "pollInterval") }
-    }
-
-    public var appearance: AppAppearance {
-        didSet { defaults.set(appearance.rawValue, forKey: "appearance") }
     }
 
     public var pomodoroEnabled: Bool {
@@ -67,13 +57,6 @@ public final class AppSettings {
             self.pollInterval = defaults.double(forKey: "pollInterval")
         } else {
             self.pollInterval = 180
-        }
-
-        if let raw = defaults.string(forKey: "appearance"),
-           let val = AppAppearance(rawValue: raw) {
-            self.appearance = val
-        } else {
-            self.appearance = .system
         }
 
         if defaults.object(forKey: "pomodoroEnabled") != nil {
