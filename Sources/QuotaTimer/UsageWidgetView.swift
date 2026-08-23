@@ -4,6 +4,10 @@ import QuotaTimerShared
 struct UsageWidgetView: View {
     let pollers: [UsagePoller]
     let settings: AppSettings
+    @State private var hovering = false
+
+    private static let baseWidth: CGFloat = 200
+    private static let baseHeight: CGFloat = 80
 
     private var enabledPollers: [UsagePoller] {
         pollers.filter { poller in
@@ -15,6 +19,36 @@ struct UsageWidgetView: View {
     }
 
     var body: some View {
+        GeometryReader { geo in
+            let scale = min(
+                geo.size.width / Self.baseWidth,
+                geo.size.height / Self.baseHeight
+            )
+            ZStack(alignment: .topTrailing) {
+                content
+                    .scaleEffect(scale)
+
+                if hovering {
+                    Button {
+                        settings.showUsageWidget = false
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.secondary)
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .buttonStyle(.borderless)
+                    .padding(6)
+                    .transition(.opacity)
+                }
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+        }
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+        .onHover { hovering = $0 }
+    }
+
+    private var content: some View {
         VStack(alignment: .leading, spacing: 6) {
             ForEach(Array(enabledPollers.enumerated()), id: \.offset) { _, poller in
                 if case .loaded(let windows) = poller.state {
@@ -45,10 +79,7 @@ struct UsageWidgetView: View {
             }
         }
         .padding(10)
-        .background {
-            RoundedRectangle(cornerRadius: 10)
-                .fill(.regularMaterial)
-        }
+        .frame(width: Self.baseWidth, height: Self.baseHeight)
     }
 
     private func providerColor(_ poller: UsagePoller) -> Color {

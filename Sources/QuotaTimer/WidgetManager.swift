@@ -51,9 +51,11 @@ final class WidgetManager {
         guard timerPanel == nil else { return }
         let panel = FloatingPanel(
             contentRect: NSRect(x: 0, y: 0, width: 180, height: 60),
-            identifier: "QuotaTimer.TimerWidget"
+            identifier: "QuotaTimer.TimerWidget",
+            minSize: NSSize(width: 120, height: 40),
+            maxSize: NSSize(width: 500, height: 200)
         )
-        let hostingView = NSHostingView(rootView: TimerWidgetView(engine: timerEngine))
+        let hostingView = NSHostingView(rootView: TimerWidgetView(engine: timerEngine, settings: settings))
         hostingView.frame = panel.contentView?.bounds ?? panel.contentLayoutRect
         hostingView.autoresizingMask = [.width, .height]
         panel.contentView = hostingView
@@ -74,7 +76,9 @@ final class WidgetManager {
         guard usagePanel == nil else { return }
         let panel = FloatingPanel(
             contentRect: NSRect(x: 0, y: 0, width: 200, height: 80),
-            identifier: "QuotaTimer.UsageWidget"
+            identifier: "QuotaTimer.UsageWidget",
+            minSize: NSSize(width: 140, height: 50),
+            maxSize: NSSize(width: 600, height: 300)
         )
         let hostingView = NSHostingView(rootView: UsageWidgetView(pollers: pollers, settings: settings))
         hostingView.frame = panel.contentView?.bounds ?? panel.contentLayoutRect

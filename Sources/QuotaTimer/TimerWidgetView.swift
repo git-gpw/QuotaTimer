@@ -3,10 +3,46 @@ import QuotaTimerShared
 
 struct TimerWidgetView: View {
     let engine: TimerEngine
+    let settings: AppSettings
     @State private var now = Date()
+    @State private var hovering = false
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
+    private static let baseWidth: CGFloat = 180
+    private static let baseHeight: CGFloat = 60
+
     var body: some View {
+        GeometryReader { geo in
+            let scale = min(
+                geo.size.width / Self.baseWidth,
+                geo.size.height / Self.baseHeight
+            )
+            ZStack(alignment: .topTrailing) {
+                content
+                    .scaleEffect(scale)
+
+                if hovering {
+                    Button {
+                        settings.showTimerWidget = false
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.secondary)
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .buttonStyle(.borderless)
+                    .padding(6)
+                    .transition(.opacity)
+                }
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+        }
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+        .onHover { hovering = $0 }
+        .onReceive(tick) { now = $0 }
+    }
+
+    private var content: some View {
         HStack(spacing: 8) {
             if let active = engine.activeTimers.first {
                 Image(systemName: "timer")
@@ -30,13 +66,6 @@ struct TimerWidgetView: View {
                     .foregroundStyle(.tertiary)
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background {
-            RoundedRectangle(cornerRadius: 10)
-                .fill(.regularMaterial)
-        }
-        .onReceive(tick) { now = $0 }
     }
 
     private func formatRemaining(_ interval: TimeInterval) -> String {

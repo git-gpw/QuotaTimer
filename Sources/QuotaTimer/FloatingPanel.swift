@@ -1,10 +1,10 @@
 import AppKit
 
 final class FloatingPanel: NSPanel {
-    init(contentRect: NSRect, identifier: String) {
+    init(contentRect: NSRect, identifier: String, minSize: NSSize? = nil, maxSize: NSSize? = nil) {
         super.init(
             contentRect: contentRect,
-            styleMask: [.nonactivatingPanel, .titled, .closable, .fullSizeContentView],
+            styleMask: [.nonactivatingPanel, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
@@ -12,12 +12,14 @@ final class FloatingPanel: NSPanel {
         isFloatingPanel = true
         level = .floating
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        titleVisibility = .hidden
-        titlebarAppearsTransparent = true
         isMovableByWindowBackground = true
         isOpaque = false
         backgroundColor = .clear
         hasShadow = true
+
+        if let min = minSize { self.minSize = min }
+        if let max = maxSize { self.maxSize = max }
+
         setFrameAutosaveName(identifier)
     }
 
