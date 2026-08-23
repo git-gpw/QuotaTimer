@@ -2,7 +2,7 @@ import SwiftUI
 import QuotaTimerShared
 
 struct SettingsView: View {
-    let settings: AppSettings
+    @Bindable var settings: AppSettings
     @State private var loginError: String?
 
     var body: some View {
@@ -34,31 +34,22 @@ struct SettingsView: View {
                 Text("Floating widgets")
                     .font(.system(size: 12, weight: .medium))
 
-                Toggle("Timer widget", isOn: Binding(
-                    get: { settings.showTimerWidget },
-                    set: { settings.showTimerWidget = $0 }
-                ))
-                .font(.system(size: 11))
-                .toggleStyle(.checkbox)
+                Toggle("Timer widget", isOn: $settings.showTimerWidget)
+                    .font(.system(size: 11))
+                    .toggleStyle(.checkbox)
 
-                Toggle("Usage widget", isOn: Binding(
-                    get: { settings.showUsageWidget },
-                    set: { settings.showUsageWidget = $0 }
-                ))
-                .font(.system(size: 11))
-                .toggleStyle(.checkbox)
+                Toggle("Usage widget", isOn: $settings.showUsageWidget)
+                    .font(.system(size: 11))
+                    .toggleStyle(.checkbox)
             }
 
             Rectangle()
                 .fill(.quaternary)
                 .frame(height: 1)
 
-            Toggle("Pomodoro presets", isOn: Binding(
-                get: { settings.pomodoroEnabled },
-                set: { settings.pomodoroEnabled = $0 }
-            ))
-            .font(.system(size: 11))
-            .toggleStyle(.checkbox)
+            Toggle("Pomodoro presets", isOn: $settings.pomodoroEnabled)
+                .font(.system(size: 11))
+                .toggleStyle(.checkbox)
 
             Toggle("Launch at login", isOn: Binding(
                 get: { LaunchAtLogin.isEnabled },

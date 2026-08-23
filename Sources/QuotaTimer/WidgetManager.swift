@@ -52,7 +52,7 @@ final class WidgetManager {
         let panel = FloatingPanel(
             contentRect: NSRect(x: 0, y: 0, width: 180, height: 60),
             identifier: "QuotaTimer.TimerWidget",
-            minSize: NSSize(width: 120, height: 40),
+            minSize: NSSize(width: 150, height: 50),
             maxSize: NSSize(width: 500, height: 200)
         )
         let hostingView = NSHostingView(rootView: TimerWidgetView(engine: timerEngine, settings: settings))
@@ -64,12 +64,14 @@ final class WidgetManager {
         }
         panel.orderFrontRegardless()
         timerPanel = panel
+        wireSnapSiblings()
         DebugLog.shared.log("Timer widget panel shown at \(panel.frame)")
     }
 
     private func hideTimerWidget() {
         timerPanel?.close()
         timerPanel = nil
+        wireSnapSiblings()
     }
 
     private func showUsageWidget() {
@@ -77,7 +79,7 @@ final class WidgetManager {
         let panel = FloatingPanel(
             contentRect: NSRect(x: 0, y: 0, width: 200, height: 80),
             identifier: "QuotaTimer.UsageWidget",
-            minSize: NSSize(width: 140, height: 50),
+            minSize: NSSize(width: 160, height: 60),
             maxSize: NSSize(width: 600, height: 300)
         )
         let hostingView = NSHostingView(rootView: UsageWidgetView(pollers: pollers, settings: settings))
@@ -89,11 +91,20 @@ final class WidgetManager {
         }
         panel.orderFrontRegardless()
         usagePanel = panel
+        wireSnapSiblings()
         DebugLog.shared.log("Usage widget panel shown at \(panel.frame)")
     }
 
     private func hideUsageWidget() {
         usagePanel?.close()
         usagePanel = nil
+        wireSnapSiblings()
+    }
+
+    private func wireSnapSiblings() {
+        let panels = [timerPanel, usagePanel].compactMap { $0 }
+        for panel in panels {
+            panel.snapSiblings = panels.filter { $0 !== panel }
+        }
     }
 }

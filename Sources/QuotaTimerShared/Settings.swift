@@ -31,11 +31,17 @@ public final class AppSettings {
     }
 
     public var showTimerWidget: Bool {
-        didSet { defaults.set(showTimerWidget, forKey: "showTimerWidget") }
+        didSet {
+            guard showTimerWidget != oldValue else { return }
+            defaults.set(showTimerWidget, forKey: "showTimerWidget")
+        }
     }
 
     public var showUsageWidget: Bool {
-        didSet { defaults.set(showUsageWidget, forKey: "showUsageWidget") }
+        didSet {
+            guard showUsageWidget != oldValue else { return }
+            defaults.set(showUsageWidget, forKey: "showUsageWidget")
+        }
     }
 
     public init(defaults: UserDefaults = .standard) {
