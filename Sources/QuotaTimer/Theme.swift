@@ -44,6 +44,24 @@ enum QTColors {
     }
 }
 
+struct GripIndicator: View {
+    var body: some View {
+        VStack(spacing: 2) {
+            ForEach(0..<2, id: \.self) { _ in
+                HStack(spacing: 2) {
+                    ForEach(0..<2, id: \.self) { _ in
+                        Circle()
+                            .fill(.quaternary)
+                            .frame(width: 3, height: 3)
+                    }
+                }
+            }
+        }
+        .padding(6)
+        .contentShape(Rectangle())
+    }
+}
+
 struct GradientProgressBar: View {
     let fraction: Double
     var height: CGFloat = 6

@@ -28,6 +28,7 @@ struct UsageWidgetView: View {
                 .frame(width: geo.size.width, height: geo.size.height)
         }
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+        .overlay(alignment: .bottomLeading) { GripIndicator() }
         .contextMenu {
             Button("Hide Usage Widget") {
                 settings.showUsageWidget = false
